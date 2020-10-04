@@ -1,0 +1,3 @@
+include ':track_sdk'
+include ':app'
+rootProject.name = "AutoTraceAppClick"
