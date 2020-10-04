@@ -37,6 +37,10 @@ public class DelegateViewHolder {
     private DelegateViewHolder() {
     }
 
+    /**
+     * spinner 代理事件
+     * @param view spinner代理id
+     */
     public void spinnerItemClick(View view) {
         AdapterView.OnItemSelectedListener onItemSelectedListener =
                 ((Spinner) view).getOnItemSelectedListener();
@@ -48,6 +52,10 @@ public class DelegateViewHolder {
         }
     }
 
+    /**
+     * 列表代理事件
+     * @param view gridView代理ui
+     */
     public void gridViewItemClick(View view) {
         AdapterView.OnItemClickListener onItemClickListener = ((AdapterView) view).getOnItemClickListener();
 
@@ -58,6 +66,10 @@ public class DelegateViewHolder {
         }
     }
 
+    /**
+     * CompoundButton代理事件
+     * @param view  compoundButton代理ui
+     */
     public void compoundButtonItemClick(View view) {
         final CompoundButton.OnCheckedChangeListener onCheckedChangeListener =
                 SensorsDataHelper.getOnCheckedChangeListener(view);
@@ -68,6 +80,10 @@ public class DelegateViewHolder {
         }
     }
 
+    /**
+     * ExpandableListView代理事件
+     * @param view ExpandableListView代理view
+     */
     public void expandableItemClick(View view) {
         try {
 
@@ -110,6 +126,10 @@ public class DelegateViewHolder {
         }
     }
 
+    /**
+     * RadioGroup 代理事件
+     * @param view RadioGroup代理view
+     */
     public void radioGroupItemClick(View view) {
 
         final RadioGroup.OnCheckedChangeListener radioOnCheckedChangeListener =
@@ -120,7 +140,10 @@ public class DelegateViewHolder {
                     new MkRadioGroupOnCheckedChangeListener(radioOnCheckedChangeListener));
         }
     }
-
+    /**
+     * seekBar 代理事件
+     * @param view seekBar代理id
+     */
     public void seekBarItemClick(View view) {
         final SeekBar.OnSeekBarChangeListener onSeekBarChangeListener =
                 SensorsDataHelper.getOnSeekBarChangeListener(view);
@@ -131,6 +154,10 @@ public class DelegateViewHolder {
         }
     }
 
+    /**
+     * RatingBar 代理事件
+     * @param view RatingBar代理id
+     */
     public void ratingBarItemClick(View view) {
         final RatingBar.OnRatingBarChangeListener onRatingBarChangeListener =
                 ((RatingBar) view).getOnRatingBarChangeListener();

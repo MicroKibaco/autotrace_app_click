@@ -184,7 +184,7 @@ public class SensorsDataHelper {
 
     /**
      * 获取 View 当前设置的 OnClickListener
-     *
+     * 反射获取会有效率问题
      * @param view View
      * @return View.OnClickListener
      */

@@ -69,26 +69,26 @@ public class SensorsDataManager {
         final Map<String, Object> deviceInfo = new HashMap<>();
         {
             deviceInfo.put("$lib", "Android");
-            deviceInfo.put("$lib_version", SensorsDataAPI.SDK_VERSION);
-            deviceInfo.put("$os", "Android");
-            deviceInfo.put("$os_version", Build.VERSION.RELEASE == null ? "UNKNOWN" : Build.VERSION.RELEASE);
-            deviceInfo.put("$manufacturer", Build.MANUFACTURER == null ? "UNKNOWN" : Build.MANUFACTURER);
-            deviceInfo.put("$model", TextUtils.isEmpty(Build.MODEL) ? "UNKNOWN" : Build.MODEL.trim());
+            deviceInfo.put(ITrackClickEvent.LIB_VERSION, SensorsDataAPI.SDK_VERSION);
+            deviceInfo.put(ITrackClickEvent.OS, "Android");
+            deviceInfo.put(ITrackClickEvent.OS_VERSION, Build.VERSION.RELEASE == null ? "UNKNOWN" : Build.VERSION.RELEASE);
+            deviceInfo.put(ITrackClickEvent.MANUFACTURER, Build.MANUFACTURER == null ? "UNKNOWN" : Build.MANUFACTURER);
+            deviceInfo.put(ITrackClickEvent.MODEL, TextUtils.isEmpty(Build.MODEL) ? "UNKNOWN" : Build.MODEL.trim());
 
             try {
                 final PackageManager manager = context.getPackageManager();
                 final PackageInfo packageInfo = manager.getPackageInfo(context.getPackageName(), 0);
-                deviceInfo.put("$app_version", packageInfo.versionName);
+                deviceInfo.put(ITrackClickEvent.APP_VERSION, packageInfo.versionName);
 
                 int labelRes = packageInfo.applicationInfo.labelRes;
-                deviceInfo.put("$app_name", context.getResources().getString(labelRes));
+                deviceInfo.put(ITrackClickEvent.APP_NAME, context.getResources().getString(labelRes));
             } catch (final Exception e) {
                 e.printStackTrace();
             }
 
             final DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-            deviceInfo.put("$screen_height", displayMetrics.heightPixels);
-            deviceInfo.put("$screen_width", displayMetrics.widthPixels);
+            deviceInfo.put(ITrackClickEvent.SCREEN_HEIGHT, displayMetrics.heightPixels);
+            deviceInfo.put(ITrackClickEvent.SCREEN_WIDTH, displayMetrics.widthPixels);
 
             return Collections.unmodifiableMap(deviceInfo);
         }
@@ -192,20 +192,20 @@ public class SensorsDataManager {
     public static void trackAdapterView(AdapterView<?> adapterView, View view, int position) {
         try {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("$element_type", adapterView.getClass().getCanonicalName());
-            jsonObject.put("$element_id", SensorsDataHelper.getViewId(adapterView));
-            jsonObject.put("$element_position", String.valueOf(position));
+            jsonObject.put(ITrackClickEvent.CANONICAL_NAME, adapterView.getClass().getCanonicalName());
+            jsonObject.put(ITrackClickEvent.ELEMENT_ID, SensorsDataHelper.getViewId(adapterView));
+            jsonObject.put(ITrackClickEvent.ELEMENT_POSITION, String.valueOf(position));
             StringBuilder stringBuilder = new StringBuilder();
             String viewText = SensorsDataHelper.traverseViewContent(stringBuilder, view);
             if (!TextUtils.isEmpty(viewText)) {
-                jsonObject.put("$element_element", viewText);
+                jsonObject.put(ITrackClickEvent.ELEMENT_POSITION, viewText);
             }
             Activity activity = SensorsDataHelper.getActivityFromView(adapterView);
             if (activity != null) {
-                jsonObject.put("$activity", activity.getClass().getCanonicalName());
+                jsonObject.put(ITrackClickEvent.ACTIVITY_NAME, activity.getClass().getCanonicalName());
             }
 
-            SensorsDataAPI.getSensorsDataApiInstance().track("$AppClick", jsonObject);
+            SensorsDataAPI.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
         } catch (Exception e) {
             Log.getStackTraceString(e);
         }
@@ -214,24 +214,24 @@ public class SensorsDataManager {
     public static void trackAdapterView(AdapterView<?> adapterView, View view, int groupPosition, int childPosition) {
         try {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("$element_type", adapterView.getClass().getCanonicalName());
-            jsonObject.put("$element_id", SensorsDataHelper.getViewId(adapterView));
+            jsonObject.put(ITrackClickEvent.CANONICAL_NAME, adapterView.getClass().getCanonicalName());
+            jsonObject.put(ITrackClickEvent.ELEMENT_ID, SensorsDataHelper.getViewId(adapterView));
             if (childPosition > -1) {
-                jsonObject.put("$element_position", String.format(Locale.CHINA, "%d:%d", groupPosition, childPosition));
+                jsonObject.put(ITrackClickEvent.ELEMENT_POSITION, String.format(Locale.CHINA, "%d:%d", groupPosition, childPosition));
             } else {
-                jsonObject.put("$element_position", String.format(Locale.CHINA, "%d", groupPosition));
+                jsonObject.put(ITrackClickEvent.ELEMENT_POSITION, String.format(Locale.CHINA, "%d", groupPosition));
             }
             StringBuilder stringBuilder = new StringBuilder();
             String viewText = SensorsDataHelper.traverseViewContent(stringBuilder, view);
             if (!TextUtils.isEmpty(viewText)) {
-                jsonObject.put("$element_element", viewText);
+                jsonObject.put(ITrackClickEvent.ELEMENT_ELEMENT, viewText);
             }
             Activity activity = SensorsDataHelper.getActivityFromView(adapterView);
             if (activity != null) {
-                jsonObject.put("$activity", activity.getClass().getCanonicalName());
+                jsonObject.put(ITrackClickEvent.ACTIVITY_NAME, activity.getClass().getCanonicalName());
             }
 
-            SensorsDataAPI.getSensorsDataApiInstance().track("$AppClick", jsonObject);
+            SensorsDataAPI.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
         } catch (Exception e) {
             Log.getStackTraceString(e);
         }
@@ -246,16 +246,16 @@ public class SensorsDataManager {
     public static void trackViewOnClick(View view) {
         try {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("$element_type", view.getClass().getCanonicalName());
-            jsonObject.put("$element_id", SensorsDataHelper.getViewId(view));
-            jsonObject.put("$element_content", SensorsDataHelper.getElementContent(view));
+            jsonObject.put(ITrackClickEvent.CANONICAL_NAME, view.getClass().getCanonicalName());
+            jsonObject.put(ITrackClickEvent.VIEW_ID, SensorsDataHelper.getViewId(view));
+            jsonObject.put(ITrackClickEvent.ELEMENT_CONTENT, SensorsDataHelper.getElementContent(view));
 
             Activity activity = SensorsDataHelper.getActivityFromView(view);
             if (activity != null) {
-                jsonObject.put("$activity", activity.getClass().getCanonicalName());
+                jsonObject.put(ITrackClickEvent.ACTIVITY_NAME, activity.getClass().getCanonicalName());
             }
 
-            SensorsDataAPI.getSensorsDataApiInstance().track("$AppClick", jsonObject);
+            SensorsDataAPI.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
         } catch (Exception e) {
             Log.getStackTraceString(e);
         }
