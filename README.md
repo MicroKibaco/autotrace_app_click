@@ -90,16 +90,38 @@ public interface ITrackClickEvent {
 ### 四. SDK风险点介绍
 
 #### 4.1 `DataBinding`绑定的函数的点击事件是无法采集的
+&emsp;&emsp;`DataBinding`框架给`Button`设置`OnClickListener`对象动作稍微晚于`onActivityResumed` 回调方法,`DataBinding`还没来得及给我们`Button`对象设置`mOnClickListener`对象,我们再遍历`RootView`的时,当前`View`不满足`hasObClickListener`的判断条件,因此没有去代理`mOnClickListener`对象,给出的解决方案是给`DataBinding`框架一点延迟事件处理设置`mOnClickListener`对象操作
+
+```java
+
+ new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        delegateViewsOnClickListener(activity, activity.getWindow().getDecorView());
+                    }
+                },300);
+
+``` 
+
 #### 4.2 `mOnClickListener`是无法采集`MenuItem`的点击事件
 #### 4.3  无法采集`Button`点击,在`OnClickListener`里动态创建一个`Button`,然后通过`addView`添加到页面上,这个动态添加的`Button`无法采其点击事件
 
 
 ### 五. SDK拓展采集能力
 #### **5.0.1** 怎样获取`TextView`的显示文本?
-##### 5.0.1.1 
-##### 5.0.1.2 
-##### 5.0.1.3
+ 
+```java
+((TextView) view).getText().toString();
+```
+ 
 #### **5.0.2** 怎样获取`ImageView`的显示文本信息?
+
+```java
+
+view.getContentDescription().toString();
+
+```
+
 #### **5.0.3** 怎样采集`CheckBox`的点击事件?
 
 ##### 5.0.3.1   自定义WrapperOnCheckedChangeListener并且 织入埋点代码
@@ -134,21 +156,23 @@ public class WrapperOnCheckedChangeListener implements CompoundButton.OnCheckedC
 ##### 5.0.3.2 获取 CheckBox 设置的 OnCheckedChangeListener
 
 ```java
-   @SuppressWarnings("all")
-    private static CompoundButton.OnCheckedChangeListener getOnCheckedChangeListener(View view) {
-        try {
-            Class viewClazz = Class.forName("android.widget.CompoundButton");
-            Field mOnCheckedChangeListenerField = viewClazz.getDeclaredField("mOnCheckedChangeListener");
-            if (!mOnCheckedChangeListenerField.isAccessible()) {
-                mOnCheckedChangeListenerField.setAccessible(true);
+    /**
+     * CheckBox  代理事件
+     *
+     * @param view compoundButton代理ui
+     */
+    public void compoundButtonItemClick(View view) {
+        if (view instanceof CheckBox){
+            final CompoundButton.OnCheckedChangeListener onCheckedChangeListener =
+                    SensorsDataHelper.getOnCheckedChangeListener(view);
+            if (onCheckedChangeListener != null &&
+                    !(onCheckedChangeListener instanceof MkOnCheckedChangeListener)) {
+                ((CompoundButton) view).setOnCheckedChangeListener(
+                        new MkOnCheckedChangeListener(onCheckedChangeListener));
             }
-            return (CompoundButton.OnCheckedChangeListener) mOnCheckedChangeListenerField.get(view);
-        } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-            Log.getStackTraceString(e);
-        } 
-        return null;
+        }
+
     }
-}
 ```
 
 

@@ -54,5 +54,9 @@ public interface ITrackClickEvent {
 
     String MANUFACTURER = "$manufacturer";
     String LIB = "$lib";
+    String TIME = "time";
 
+    String PROPERTIES = "properties";
+    String DEVICE_ID = "device_id";
+    String EVENT = "event";
 }

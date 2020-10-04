@@ -22,21 +22,21 @@ import androidx.annotation.NonNull;
  * @function description: 埋点SDK主类
  */
 @Keep
-public class SensorsDataAPI {
+public class SensorsReporter {
     private final String TAG = this.getClass().getSimpleName();
     public static final String SDK_VERSION = "1.0.0";
     private static final Object LOCK = new Object();
-    private volatile static SensorsDataAPI SENSORS_DATA_API_INSTANCE;
+    private volatile static SensorsReporter SENSORS_DATA_API_INSTANCE;
     private static Map<String, Object> mDeviceInfo;
     private String mDeviceId;
 
-    public SensorsDataAPI(Application application){
+    public SensorsReporter(Application application){
         mDeviceId = SensorsDataHelper.getAndroidId(application);
         mDeviceInfo = SensorsDataManager.getDeviceInfo(application);
         SensorsDataManager.registerActivityLifecycleCallbacks(application);
     }
 
-    public static SensorsDataAPI getSensorsDataApiInstance() {
+    public static SensorsReporter getSensorsDataApiInstance() {
         return SENSORS_DATA_API_INSTANCE;
     }
 
@@ -47,11 +47,11 @@ public class SensorsDataAPI {
      * @return SensorsDataAPI 主类
      */
     @Keep
-    public static SensorsDataAPI init(Application application) {
+    public static SensorsReporter init(Application application) {
         if (SENSORS_DATA_API_INSTANCE == null) {
             synchronized (LOCK) {
                 if (SENSORS_DATA_API_INSTANCE == null) {
-                    SENSORS_DATA_API_INSTANCE = new SensorsDataAPI(application);
+                    SENSORS_DATA_API_INSTANCE = new SensorsReporter(application);
                 }
             }
 

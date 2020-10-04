@@ -3,8 +3,11 @@ package com.github.microkibaco.track_sdk;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ExpandableListView;
+import android.widget.GridView;
+import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.RatingBar;
 import android.widget.SeekBar;
@@ -39,133 +42,157 @@ public class DelegateViewHolder {
 
     /**
      * spinner 代理事件
+     *
      * @param view spinner代理id
      */
     public void spinnerItemClick(View view) {
-        AdapterView.OnItemSelectedListener onItemSelectedListener =
-                ((Spinner) view).getOnItemSelectedListener();
+        if (view instanceof Spinner){
+            AdapterView.OnItemSelectedListener onItemSelectedListener =
+                    ((Spinner) view).getOnItemSelectedListener();
 
-        if (onItemSelectedListener != null &&
-                !(onItemSelectedListener instanceof MkAdapterViewOnItemSelectedListener)) {
-            ((Spinner) view).setOnItemSelectedListener(
-                    new MkAdapterViewOnItemSelectedListener(onItemSelectedListener));
+            if (onItemSelectedListener != null &&
+                    !(onItemSelectedListener instanceof MkAdapterViewOnItemSelectedListener)) {
+                ((Spinner) view).setOnItemSelectedListener(
+                        new MkAdapterViewOnItemSelectedListener(onItemSelectedListener));
+            }
         }
+
     }
 
     /**
      * 列表代理事件
+     *
      * @param view gridView代理ui
      */
     public void gridViewItemClick(View view) {
-        AdapterView.OnItemClickListener onItemClickListener = ((AdapterView) view).getOnItemClickListener();
+        if (view instanceof ListView || view instanceof GridView){
+            AdapterView.OnItemClickListener onItemClickListener = ((AdapterView) view).getOnItemClickListener();
 
-        if (onItemClickListener != null && !(onItemClickListener instanceof MkAdapterViewOnItemClick)) {
+            if (onItemClickListener != null && !(onItemClickListener instanceof MkAdapterViewOnItemClick)) {
 
-            ((AdapterView) view).setOnItemClickListener(new MkAdapterViewOnItemClick(onItemClickListener));
+                ((AdapterView) view).setOnItemClickListener(new MkAdapterViewOnItemClick(onItemClickListener));
 
+            }
         }
+
     }
 
     /**
-     * CompoundButton代理事件
-     * @param view  compoundButton代理ui
+     * CheckBox  代理事件
+     *
+     * @param view compoundButton代理ui
      */
     public void compoundButtonItemClick(View view) {
-        final CompoundButton.OnCheckedChangeListener onCheckedChangeListener =
-                SensorsDataHelper.getOnCheckedChangeListener(view);
-        if (onCheckedChangeListener != null &&
-                !(onCheckedChangeListener instanceof MkOnCheckedChangeListener)) {
-            ((CompoundButton) view).setOnCheckedChangeListener(
-                    new MkOnCheckedChangeListener(onCheckedChangeListener));
+        if (view instanceof CheckBox){
+            final CompoundButton.OnCheckedChangeListener onCheckedChangeListener =
+                    SensorsDataHelper.getOnCheckedChangeListener(view);
+            if (onCheckedChangeListener != null &&
+                    !(onCheckedChangeListener instanceof MkOnCheckedChangeListener)) {
+                ((CompoundButton) view).setOnCheckedChangeListener(
+                        new MkOnCheckedChangeListener(onCheckedChangeListener));
+            }
         }
+
     }
 
     /**
      * ExpandableListView代理事件
+     *
      * @param view ExpandableListView代理view
      */
     public void expandableItemClick(View view) {
-        try {
+       if (view instanceof  ExpandableListView){
+           try {
 
-            Class viewClazz = Class.forName("android.widget.ExpandableListView");
+               final Class viewClazz = Class.forName("android.widget.ExpandableListView");
 
-            // ---------------------------------------Child---------------------------------------
-            Field mOnChildClickListenerField = viewClazz.getDeclaredField("mOnChildClickListener");
+               // ---------------------------------------Child---------------------------------------
+               Field mOnChildClickListenerField = viewClazz.getDeclaredField("mOnChildClickListener");
 
-            if (!mOnChildClickListenerField.isAccessible()) {
+               if (!mOnChildClickListenerField.isAccessible()) {
 
-                mOnChildClickListenerField.setAccessible(true);
+                   mOnChildClickListenerField.setAccessible(true);
 
-            }
-            ExpandableListView.OnChildClickListener onChildClickListener =
-                    (ExpandableListView.OnChildClickListener) mOnChildClickListenerField.get(view);
+               }
+               ExpandableListView.OnChildClickListener onChildClickListener =
+                       (ExpandableListView.OnChildClickListener) mOnChildClickListenerField.get(view);
 
-            if (onChildClickListener != null && !(onChildClickListener instanceof MkOnChildClickListener)) {
+               if (onChildClickListener != null && !(onChildClickListener instanceof MkOnChildClickListener)) {
 
-                ((ExpandableListView) view).setOnChildClickListener(new MkOnChildClickListener(onChildClickListener));
+                   ((ExpandableListView) view).setOnChildClickListener(new MkOnChildClickListener(onChildClickListener));
 
-            }
+               }
 
-            // ---------------------------------------Group---------------------------------------
-            Field mOnGroupClickListenerField = viewClazz.getDeclaredField("mOnGroupClickListener");
+               // ---------------------------------------Group---------------------------------------
+               Field mOnGroupClickListenerField = viewClazz.getDeclaredField("mOnGroupClickListener");
 
-            if (!mOnGroupClickListenerField.isAccessible()) {
-                mOnGroupClickListenerField.setAccessible(true);
-            }
+               if (!mOnGroupClickListenerField.isAccessible()) {
+                   mOnGroupClickListenerField.setAccessible(true);
+               }
 
-            ExpandableListView.OnGroupClickListener onGroupClickListener =
-                    (ExpandableListView.OnGroupClickListener) mOnGroupClickListenerField.get(view);
-            if (onGroupClickListener != null && !(onGroupClickListener instanceof MkOnGroupClickListener)) {
+               ExpandableListView.OnGroupClickListener onGroupClickListener =
+                       (ExpandableListView.OnGroupClickListener) mOnGroupClickListenerField.get(view);
+               if (onGroupClickListener != null && !(onGroupClickListener instanceof MkOnGroupClickListener)) {
 
-                ((ExpandableListView) view).setOnGroupClickListener(new MkOnGroupClickListener(onGroupClickListener));
+                   ((ExpandableListView) view).setOnGroupClickListener(new MkOnGroupClickListener(onGroupClickListener));
 
-            }
+               }
 
-        } catch (Exception e) {
-            Log.getStackTraceString(e);
-        }
+           } catch (Exception e) {
+               Log.getStackTraceString(e);
+           }
+       }
     }
 
     /**
      * RadioGroup 代理事件
+     *
      * @param view RadioGroup代理view
      */
     public void radioGroupItemClick(View view) {
-
-        final RadioGroup.OnCheckedChangeListener radioOnCheckedChangeListener =
-                SensorsDataHelper.getRadioGroupOnCheckedChangeListener(view);
-        if (radioOnCheckedChangeListener != null &&
-                !(radioOnCheckedChangeListener instanceof MkRadioGroupOnCheckedChangeListener)) {
-            ((RadioGroup) view).setOnCheckedChangeListener(
-                    new MkRadioGroupOnCheckedChangeListener(radioOnCheckedChangeListener));
+        if (view instanceof RadioGroup) {
+            final RadioGroup.OnCheckedChangeListener radioOnCheckedChangeListener =
+                    SensorsDataHelper.getRadioGroupOnCheckedChangeListener(view);
+            if (radioOnCheckedChangeListener != null &&
+                    !(radioOnCheckedChangeListener instanceof MkRadioGroupOnCheckedChangeListener)) {
+                ((RadioGroup) view).setOnCheckedChangeListener(
+                        new MkRadioGroupOnCheckedChangeListener(radioOnCheckedChangeListener));
+            }
         }
     }
+
     /**
      * seekBar 代理事件
+     *
      * @param view seekBar代理id
      */
     public void seekBarItemClick(View view) {
-        final SeekBar.OnSeekBarChangeListener onSeekBarChangeListener =
-                SensorsDataHelper.getOnSeekBarChangeListener(view);
-        if (onSeekBarChangeListener != null &&
-                !(onSeekBarChangeListener instanceof MkOnSeekBarChangeListener)) {
-            ((SeekBar) view).setOnSeekBarChangeListener(
-                    new MkOnSeekBarChangeListener(onSeekBarChangeListener));
+        if (view instanceof SeekBar) {
+            final SeekBar.OnSeekBarChangeListener onSeekBarChangeListener =
+                    SensorsDataHelper.getOnSeekBarChangeListener(view);
+            if (onSeekBarChangeListener != null &&
+                    !(onSeekBarChangeListener instanceof MkOnSeekBarChangeListener)) {
+                ((SeekBar) view).setOnSeekBarChangeListener(
+                        new MkOnSeekBarChangeListener(onSeekBarChangeListener));
+            }
         }
+
     }
 
     /**
      * RatingBar 代理事件
+     *
      * @param view RatingBar代理id
      */
     public void ratingBarItemClick(View view) {
-        final RatingBar.OnRatingBarChangeListener onRatingBarChangeListener =
-                ((RatingBar) view).getOnRatingBarChangeListener();
-        if (onRatingBarChangeListener != null &&
-                !(onRatingBarChangeListener instanceof MkOnRatingBarChangeListener)) {
-            ((RatingBar) view).setOnRatingBarChangeListener(
-                    new MkOnRatingBarChangeListener(onRatingBarChangeListener));
+        if (view instanceof RatingBar) {
+            final RatingBar.OnRatingBarChangeListener onRatingBarChangeListener =
+                    ((RatingBar) view).getOnRatingBarChangeListener();
+            if (onRatingBarChangeListener != null &&
+                    !(onRatingBarChangeListener instanceof MkOnRatingBarChangeListener)) {
+                ((RatingBar) view).setOnRatingBarChangeListener(
+                        new MkOnRatingBarChangeListener(onRatingBarChangeListener));
+            }
         }
-
     }
 }

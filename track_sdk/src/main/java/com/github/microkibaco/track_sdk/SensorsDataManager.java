@@ -14,14 +14,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
-import android.widget.CompoundButton;
-import android.widget.ExpandableListView;
-import android.widget.GridView;
-import android.widget.ListView;
-import android.widget.RadioGroup;
-import android.widget.RatingBar;
-import android.widget.SeekBar;
-import android.widget.Spinner;
 
 import com.github.microkibaco.track_sdk.wrapper.MkOnClickListener;
 
@@ -69,7 +61,7 @@ public class SensorsDataManager {
         final Map<String, Object> deviceInfo = new HashMap<>(10);
 
             deviceInfo.put(ITrackClickEvent.LIB, "Android");
-            deviceInfo.put(ITrackClickEvent.LIB_VERSION, SensorsDataAPI.SDK_VERSION);
+            deviceInfo.put(ITrackClickEvent.LIB_VERSION, SensorsReporter.SDK_VERSION);
             deviceInfo.put(ITrackClickEvent.OS, "Android");
             deviceInfo.put(ITrackClickEvent.OS_VERSION, Build.VERSION.RELEASE == null ? "UNKNOWN" : Build.VERSION.RELEASE);
             deviceInfo.put(ITrackClickEvent.MANUFACTURER, Build.MANUFACTURER == null ? "UNKNOWN" : Build.MANUFACTURER);
@@ -108,7 +100,7 @@ public class SensorsDataManager {
                     @Override
                     public void onGlobalLayout() {
                         delegateViewsOnClickListener(activity,
-                                SensorsDataHelper.getRootViewFromActivity(activity, true));
+                                SensorsDataHelper.getRootViewFromActivity(activity, false));
                     }
                 };
             }
@@ -121,7 +113,7 @@ public class SensorsDataManager {
             @Override
             public void onActivityResumed(@NonNull final Activity activity) {
 
-                // 为了防止DataBonding框架给Button设置OnClickListener对象动作稍微晚于onActivityResumed生命周期
+                // TODO:为了防止DataBonding框架给Button设置OnClickListener对象动作稍微晚于onActivityResumed生命周期
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -142,7 +134,7 @@ public class SensorsDataManager {
                 /*
                  * 移除顶层Activity的监听
                  */
-                SensorsDataHelper.getRootViewFromActivity(activity, true)
+                SensorsDataHelper.getRootViewFromActivity(activity, false)
                         .getViewTreeObserver()
                         .removeOnGlobalLayoutListener(onGlobalLayoutListener);
 
@@ -161,24 +153,16 @@ public class SensorsDataManager {
     }
 
 
-    private static void delegateViewsOnClickListener(final Context context, final View view) {
+    public static void delegateViewsOnClickListener(final Context context, final View view) {
         if (context == null || view == null) {
             return;
         }
         if (view instanceof AdapterView) {
-            if (view instanceof Spinner) {
 
-                DelegateViewHolder.getInstance().spinnerItemClick(view);
+            DelegateViewHolder.getInstance().spinnerItemClick(view);
+            DelegateViewHolder.getInstance().expandableItemClick(view);
+            DelegateViewHolder.getInstance().gridViewItemClick(view);
 
-            } else if (view instanceof ExpandableListView) {
-
-                DelegateViewHolder.getInstance().expandableItemClick(view);
-
-            } else if (view instanceof ListView || view instanceof GridView) {
-
-                DelegateViewHolder.getInstance().gridViewItemClick(view);
-
-            }
         } else {
             // 获取当前 view 设置的 OnClickListener
             final View.OnClickListener listener = SensorsDataHelper.getOnClickListener(view);
@@ -188,20 +172,13 @@ public class SensorsDataManager {
                 // 替换成自定义的 WrapperOnClickListener
                 view.setOnClickListener(new MkOnClickListener(listener));
 
-            } else if (view instanceof CompoundButton) {
-
-                DelegateViewHolder.getInstance().compoundButtonItemClick(view);
-
-            } else if (view instanceof RadioGroup) {
-
-                DelegateViewHolder.getInstance().radioGroupItemClick(view);
-
-            } else if (view instanceof RatingBar) {
-                DelegateViewHolder.getInstance().ratingBarItemClick(view);
-                // ---------------------------------------SeekBar-----------------------------------
-            } else if (view instanceof SeekBar) {
-                DelegateViewHolder.getInstance().seekBarItemClick(view);
             }
+
+             DelegateViewHolder.getInstance().compoundButtonItemClick(view);
+             DelegateViewHolder.getInstance().radioGroupItemClick(view);
+             DelegateViewHolder.getInstance().ratingBarItemClick(view);
+             DelegateViewHolder.getInstance().seekBarItemClick(view);
+
         }
     }
 
@@ -211,7 +188,7 @@ public class SensorsDataManager {
             jsonObject.put(ITrackClickEvent.CANONICAL_NAME, adapterView.getClass().getCanonicalName());
             jsonObject.put(ITrackClickEvent.ELEMENT_ID, SensorsDataHelper.getViewId(adapterView));
             jsonObject.put(ITrackClickEvent.ELEMENT_POSITION, String.valueOf(position));
-            StringBuilder stringBuilder = new StringBuilder();
+            final StringBuilder stringBuilder = new StringBuilder();
             String viewText = SensorsDataHelper.traverseViewContent(stringBuilder, view);
             if (!TextUtils.isEmpty(viewText)) {
                 jsonObject.put(ITrackClickEvent.ELEMENT_POSITION, viewText);
@@ -221,7 +198,7 @@ public class SensorsDataManager {
                 jsonObject.put(ITrackClickEvent.ACTIVITY_NAME, activity.getClass().getCanonicalName());
             }
 
-            SensorsDataAPI.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
+            SensorsReporter.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
         } catch (Exception e) {
             Log.getStackTraceString(e);
         }
@@ -247,7 +224,7 @@ public class SensorsDataManager {
                 jsonObject.put(ITrackClickEvent.ACTIVITY_NAME, activity.getClass().getCanonicalName());
             }
 
-            SensorsDataAPI.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
+            SensorsReporter.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
         } catch (Exception e) {
             Log.getStackTraceString(e);
         }
@@ -266,12 +243,12 @@ public class SensorsDataManager {
             jsonObject.put(ITrackClickEvent.VIEW_ID, SensorsDataHelper.getViewId(view));
             jsonObject.put(ITrackClickEvent.ELEMENT_CONTENT, SensorsDataHelper.getElementContent(view));
 
-            Activity activity = SensorsDataHelper.getActivityFromView(view);
+            final Activity activity = SensorsDataHelper.getActivityFromView(view);
             if (activity != null) {
                 jsonObject.put(ITrackClickEvent.ACTIVITY_NAME, activity.getClass().getCanonicalName());
             }
 
-            SensorsDataAPI.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
+            SensorsReporter.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
         } catch (Exception e) {
             Log.getStackTraceString(e);
         }

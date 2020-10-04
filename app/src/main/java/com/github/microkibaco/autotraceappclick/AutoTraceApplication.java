@@ -2,7 +2,7 @@ package com.github.microkibaco.autotraceappclick;
 
 import android.app.Application;
 
-import com.github.microkibaco.track_sdk.SensorsDataAPI;
+import com.github.microkibaco.track_sdk.SensorsReporter;
 
 /**
  * @author 杨正友(小木箱)于 2020/10/5 00 08 创建
@@ -26,7 +26,7 @@ public class AutoTraceApplication extends Application {
     private void initSensorsDataApi(AutoTraceApplication traceApplication) {
 
 
-        SensorsDataAPI.init(traceApplication);
+        SensorsReporter.init(traceApplication);
 
 
     }
