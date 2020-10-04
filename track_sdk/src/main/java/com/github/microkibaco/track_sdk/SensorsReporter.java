@@ -1,7 +1,10 @@
 package com.github.microkibaco.track_sdk;
 
+import android.app.Activity;
 import android.app.Application;
+import android.app.Dialog;
 import android.util.Log;
+import android.view.ViewTreeObserver;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
 
 /**
  * @author 杨正友(小木箱)于 2020/10/4 14 01 创建
@@ -65,18 +69,36 @@ public class SensorsDataAPI {
 
         final JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("event", eventName);
-            jsonObject.put("device_id", mDeviceId);
+            jsonObject.put(ITrackClickEvent.EVENT, eventName);
+            jsonObject.put(ITrackClickEvent.DEVICE_ID , mDeviceId);
             final JSONObject sendProperties = new JSONObject(mDeviceInfo);
 
             if (Objects.nonNull(sendProperties)) {
                 SensorsDataManager.mergeJsonObject(properties, sendProperties);
             }
-            jsonObject.put("properties", sendProperties);
-            jsonObject.put("time", System.currentTimeMillis());
+            jsonObject.put(ITrackClickEvent.PROPERTIES, sendProperties);
+            jsonObject.put(ITrackClickEvent.TIME, System.currentTimeMillis());
             Log.i(TAG, SensorsDataHelper.formatJson(jsonObject.toString()));
         } catch (JSONException e) {
             Log.getStackTraceString(e);
         }
+    }
+
+
+    /**
+     * Track Dialog 的点击
+     * @param activity Activity
+     * @param dialog Dialog
+     */
+    public void trackDialog(@NonNull final Activity activity, @NonNull final Dialog dialog) {
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    SensorsDataManager.delegateViewsOnClickListener(activity, dialog.getWindow().getDecorView());
+                }
+            });
+        }
+
     }
 }
