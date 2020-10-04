@@ -59,7 +59,7 @@ public class SensorsDataHelper {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.getStackTraceString(e);
         }
         return activity;
     }
@@ -78,7 +78,7 @@ public class SensorsDataHelper {
                 idString = view.getContext().getResources().getResourceEntryName(view.getId());
             }
         } catch (Exception e) {
-            //ignore
+            Log.getStackTraceString(e);
         }
         return idString;
     }
@@ -158,7 +158,7 @@ public class SensorsDataHelper {
 
             return stringBuilder.toString();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.getStackTraceString(e);
             return stringBuilder.toString();
         }
     }
@@ -208,7 +208,7 @@ public class SensorsDataHelper {
             } catch (ClassNotFoundException | NoSuchMethodException |
                     InvocationTargetException | IllegalAccessException
                     | NoSuchFieldException e) {
-                e.printStackTrace();
+                Log.getStackTraceString(e);
             }
         }
         return null;
@@ -225,7 +225,7 @@ public class SensorsDataHelper {
             }
             return (RadioGroup.OnCheckedChangeListener) mOnCheckedChangeListenerField.get(view);
         } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
+            Log.getStackTraceString(e);
         }
         return null;
     }
@@ -242,7 +242,7 @@ public class SensorsDataHelper {
         try {
             androidId = Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.getStackTraceString(e);
         }
         return androidId;
     }
@@ -254,7 +254,7 @@ public class SensorsDataHelper {
                 sb.append('\t');
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.getStackTraceString(e);
         }
     }
 
@@ -269,7 +269,7 @@ public class SensorsDataHelper {
             }
             return (SeekBar.OnSeekBarChangeListener) mOnCheckedChangeListenerField.get(view);
         } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
+            Log.getStackTraceString(e);
         }
         return null;
     }
@@ -327,9 +327,15 @@ public class SensorsDataHelper {
 
             return sb.toString();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.getStackTraceString(e);
             return "";
         }
+    }
+
+
+    public static ViewGroup getRootViewFromActivity(Activity activity, boolean decorView) {
+        ViewGroup contentView = activity.findViewById(android.R.id.content);
+        return decorView ? (ViewGroup) activity.getWindow().getDecorView() : contentView;
     }
 
 }

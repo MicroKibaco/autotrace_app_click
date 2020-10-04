@@ -53,5 +53,6 @@ public interface ITrackClickEvent {
     String OS_VERSION = "$os_version";
 
     String MANUFACTURER = "$manufacturer";
+    String LIB = "$lib";
 
 }

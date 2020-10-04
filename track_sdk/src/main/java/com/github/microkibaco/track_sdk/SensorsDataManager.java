@@ -11,7 +11,6 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
@@ -60,7 +59,7 @@ public class SensorsDataManager {
                     dest.put(key, value instanceof Date ? DATE_FORMAT.format((Date) value) : value);
                 }
             } catch (JSONException e) {
-                e.printStackTrace();
+              Log.getStackTraceString(e);
             }
         }
     }
@@ -68,7 +67,7 @@ public class SensorsDataManager {
     public static Map<String, Object> getDeviceInfo(Context context) {
         final Map<String, Object> deviceInfo = new HashMap<>();
         {
-            deviceInfo.put("$lib", "Android");
+            deviceInfo.put(ITrackClickEvent.LIB, "Android");
             deviceInfo.put(ITrackClickEvent.LIB_VERSION, SensorsDataAPI.SDK_VERSION);
             deviceInfo.put(ITrackClickEvent.OS, "Android");
             deviceInfo.put(ITrackClickEvent.OS_VERSION, Build.VERSION.RELEASE == null ? "UNKNOWN" : Build.VERSION.RELEASE);
@@ -80,7 +79,7 @@ public class SensorsDataManager {
                 final PackageInfo packageInfo = manager.getPackageInfo(context.getPackageName(), 0);
                 deviceInfo.put(ITrackClickEvent.APP_VERSION, packageInfo.versionName);
 
-                int labelRes = packageInfo.applicationInfo.labelRes;
+                final int labelRes = packageInfo.applicationInfo.labelRes;
                 deviceInfo.put(ITrackClickEvent.APP_NAME, context.getResources().getString(labelRes));
             } catch (final Exception e) {
                 e.printStackTrace();
@@ -94,10 +93,6 @@ public class SensorsDataManager {
         }
     }
 
-    private static ViewGroup getRootViewFromActivity(Activity activity, boolean decorView) {
-        ViewGroup contentView = activity.findViewById(android.R.id.content);
-        return decorView ? (ViewGroup) activity.getWindow().getDecorView() : contentView;
-    }
 
     /**
      * 注册 Application.ActivityLifecycleCallbacks
@@ -107,8 +102,14 @@ public class SensorsDataManager {
             private ViewTreeObserver.OnGlobalLayoutListener onGlobalLayoutListener;
 
             @Override
-            public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
-                final ViewGroup rootView = getRootViewFromActivity(activity, true);
+            public void onActivityCreated(@NonNull final Activity activity, @Nullable Bundle savedInstanceState) {
+                onGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        delegateViewsOnClickListener(activity,
+                                SensorsDataHelper.getRootViewFromActivity(activity, true));
+                    }
+                };
             }
 
             @Override
@@ -118,8 +119,8 @@ public class SensorsDataManager {
 
             @Override
             public void onActivityResumed(@NonNull Activity activity) {
-                ViewGroup rootView = activity.findViewById(android.R.id.content);
-                delegateViewsOnClickListener(activity, rootView);
+
+                delegateViewsOnClickListener(activity, activity.findViewById(android.R.id.content));
             }
 
             @Override
@@ -129,6 +130,13 @@ public class SensorsDataManager {
 
             @Override
             public void onActivityStopped(@NonNull Activity activity) {
+
+                /*
+                 * 移除顶层Activity的监听
+                 */
+                SensorsDataHelper.getRootViewFromActivity(activity, true)
+                        .getViewTreeObserver()
+                        .removeOnGlobalLayoutListener(onGlobalLayoutListener);
 
             }
 
@@ -150,15 +158,15 @@ public class SensorsDataManager {
             return;
         }
         if (view instanceof AdapterView) {
-             if (view instanceof Spinner) {
+            if (view instanceof Spinner) {
 
                 DelegateViewHolder.getInstance().spinnerItemClick(view);
 
-             } else if (view instanceof ExpandableListView) {
+            } else if (view instanceof ExpandableListView) {
 
                 DelegateViewHolder.getInstance().expandableItemClick(view);
 
-             } else if (view instanceof ListView || view instanceof GridView) {
+            } else if (view instanceof ListView || view instanceof GridView) {
 
                 DelegateViewHolder.getInstance().gridViewItemClick(view);
 
@@ -178,7 +186,7 @@ public class SensorsDataManager {
 
             } else if (view instanceof RadioGroup) {
 
-                DelegateViewHolder.getInstance().radioGroupItemClick  (view);
+                DelegateViewHolder.getInstance().radioGroupItemClick(view);
 
             } else if (view instanceof RatingBar) {
                 DelegateViewHolder.getInstance().ratingBarItemClick(view);
@@ -191,7 +199,7 @@ public class SensorsDataManager {
 
     public static void trackAdapterView(AdapterView<?> adapterView, View view, int position) {
         try {
-            JSONObject jsonObject = new JSONObject();
+            final JSONObject jsonObject = new JSONObject();
             jsonObject.put(ITrackClickEvent.CANONICAL_NAME, adapterView.getClass().getCanonicalName());
             jsonObject.put(ITrackClickEvent.ELEMENT_ID, SensorsDataHelper.getViewId(adapterView));
             jsonObject.put(ITrackClickEvent.ELEMENT_POSITION, String.valueOf(position));
@@ -213,7 +221,7 @@ public class SensorsDataManager {
 
     public static void trackAdapterView(AdapterView<?> adapterView, View view, int groupPosition, int childPosition) {
         try {
-            JSONObject jsonObject = new JSONObject();
+            final JSONObject jsonObject = new JSONObject();
             jsonObject.put(ITrackClickEvent.CANONICAL_NAME, adapterView.getClass().getCanonicalName());
             jsonObject.put(ITrackClickEvent.ELEMENT_ID, SensorsDataHelper.getViewId(adapterView));
             if (childPosition > -1) {
@@ -226,7 +234,7 @@ public class SensorsDataManager {
             if (!TextUtils.isEmpty(viewText)) {
                 jsonObject.put(ITrackClickEvent.ELEMENT_ELEMENT, viewText);
             }
-            Activity activity = SensorsDataHelper.getActivityFromView(adapterView);
+            final Activity activity = SensorsDataHelper.getActivityFromView(adapterView);
             if (activity != null) {
                 jsonObject.put(ITrackClickEvent.ACTIVITY_NAME, activity.getClass().getCanonicalName());
             }
@@ -245,7 +253,7 @@ public class SensorsDataManager {
     @Keep
     public static void trackViewOnClick(View view) {
         try {
-            JSONObject jsonObject = new JSONObject();
+            final JSONObject jsonObject = new JSONObject();
             jsonObject.put(ITrackClickEvent.CANONICAL_NAME, view.getClass().getCanonicalName());
             jsonObject.put(ITrackClickEvent.VIEW_ID, SensorsDataHelper.getViewId(view));
             jsonObject.put(ITrackClickEvent.ELEMENT_CONTENT, SensorsDataHelper.getElementContent(view));
