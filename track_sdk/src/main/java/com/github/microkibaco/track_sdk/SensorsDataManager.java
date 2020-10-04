@@ -7,6 +7,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -65,8 +66,8 @@ public class SensorsDataManager {
     }
 
     public static Map<String, Object> getDeviceInfo(Context context) {
-        final Map<String, Object> deviceInfo = new HashMap<>();
-        {
+        final Map<String, Object> deviceInfo = new HashMap<>(10);
+
             deviceInfo.put(ITrackClickEvent.LIB, "Android");
             deviceInfo.put(ITrackClickEvent.LIB_VERSION, SensorsDataAPI.SDK_VERSION);
             deviceInfo.put(ITrackClickEvent.OS, "Android");
@@ -90,7 +91,7 @@ public class SensorsDataManager {
             deviceInfo.put(ITrackClickEvent.SCREEN_WIDTH, displayMetrics.widthPixels);
 
             return Collections.unmodifiableMap(deviceInfo);
-        }
+
     }
 
 
@@ -118,9 +119,16 @@ public class SensorsDataManager {
             }
 
             @Override
-            public void onActivityResumed(@NonNull Activity activity) {
+            public void onActivityResumed(@NonNull final Activity activity) {
 
-                delegateViewsOnClickListener(activity, activity.findViewById(android.R.id.content));
+                // 为了防止DataBonding框架给Button设置OnClickListener对象动作稍微晚于onActivityResumed生命周期
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        delegateViewsOnClickListener(activity, activity.getWindow().getDecorView());
+                    }
+                },300);
+
             }
 
             @Override

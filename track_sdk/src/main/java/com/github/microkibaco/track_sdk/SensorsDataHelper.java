@@ -8,6 +8,7 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -116,7 +117,7 @@ public class SensorsDataHelper {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.getStackTraceString(e);
             }
         } else if (view instanceof RatingBar) {
             text = String.valueOf(((RatingBar) view).getRating());
@@ -187,24 +188,25 @@ public class SensorsDataHelper {
      * 反射获取会有效率问题
      * @param view View
      * @return View.OnClickListener
+     * 为啥为空?
      */
     @SuppressWarnings({"all"})
-    public static View.OnClickListener getOnClickListener(View view) {
+    public static OnClickListener getOnClickListener(View view) {
         boolean hasOnClick = view.hasOnClickListeners();
         if (hasOnClick) {
             try {
-                Class viewClazz = Class.forName("android.view.View");
-                Method listenerInfoMethod = viewClazz.getDeclaredMethod("getListenerInfo");
-                if (!listenerInfoMethod.isAccessible()) {
-                    listenerInfoMethod.setAccessible(true);
-                }
+                final Class viewClazz = Class.forName("android.view.View");
+                final  Method listenerInfoMethod = viewClazz.getDeclaredMethod("getListenerInfo");
+
+                listenerInfoMethod.setAccessible(!listenerInfoMethod.isAccessible());
+
                 Object listenerInfoObj = listenerInfoMethod.invoke(view);
                 Class listenerInfoClazz = Class.forName("android.view.View$ListenerInfo");
                 Field onClickListenerField = listenerInfoClazz.getDeclaredField("mOnClickListener");
-                if (!onClickListenerField.isAccessible()) {
-                    onClickListenerField.setAccessible(true);
-                }
-                return (View.OnClickListener) onClickListenerField.get(listenerInfoObj);
+
+                onClickListenerField.setAccessible(!onClickListenerField.isAccessible());
+
+                return (OnClickListener) onClickListenerField.get(listenerInfoObj);
             } catch (ClassNotFoundException | NoSuchMethodException |
                     InvocationTargetException | IllegalAccessException
                     | NoSuchFieldException e) {
@@ -262,8 +264,8 @@ public class SensorsDataHelper {
     @SuppressWarnings("all")
     public static SeekBar.OnSeekBarChangeListener getOnSeekBarChangeListener(View view) {
         try {
-            Class viewClazz = Class.forName("android.widget.SeekBar");
-            Field mOnCheckedChangeListenerField = viewClazz.getDeclaredField("mOnSeekBarChangeListener");
+            final Class viewClazz = Class.forName("android.widget.SeekBar");
+            final Field mOnCheckedChangeListenerField = viewClazz.getDeclaredField("mOnSeekBarChangeListener");
             if (!mOnCheckedChangeListenerField.isAccessible()) {
                 mOnCheckedChangeListenerField.setAccessible(true);
             }

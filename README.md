@@ -32,7 +32,68 @@
   - 调用埋点代码,实现"插入"埋点,达到自动埋点效果。
 
 ### 三. SDK埋点信息介绍
+
+```java
+public interface ITrackClickEvent {
+    /**
+     * 控件的类型
+     */
+    String CANONICAL_NAME = "$element_type";
+    /**
+     * 控件的id,即android:id属性指定的值
+     */
+    String VIEW_ID = "$element_id";
+    /**
+     * 控件显示的文本信息
+     */
+    String ELEMENT_CONTENT = "$element_content";
+
+    /**
+     * 当前控件所属的 Activity 页面
+     */
+    String ACTIVITY_NAME = "$activity";
+
+    /**
+     * 点击空间行为事件名称
+     */
+    String APP_CLICK = "$AppClick";
+
+    String APP_VERSION = "$app_version";
+
+    String APP_NAME = "$app_name";
+
+    String SCREEN_HEIGHT = "$screen_height";
+
+    String SCREEN_WIDTH = "$screen_width";
+
+    String ELEMENT_POSITION = "$element_position";
+
+    String ELEMENT_ID = "$element_id";
+
+    String ELEMENT_ELEMENT = "$element_element";
+
+    String MODEL = "$model";
+
+    String LIB_VERSION = "$lib_version";
+
+    String OS = "$os";
+
+    String OS_VERSION = "$os_version";
+
+    String MANUFACTURER = "$manufacturer";
+    String LIB = "$lib";
+
+}
+
+```
+
 ### 四. SDK风险点介绍
+
+#### 4.1 `DataBinding`绑定的函数的点击事件是无法采集的
+#### 4.2 `mOnClickListener`是无法采集`MenuItem`的点击事件
+#### 4.3  无法采集`Button`点击,在`OnClickListener`里动态创建一个`Button`,然后通过`addView`添加到页面上,这个动态添加的`Button`无法采其点击事件
+
+
 ### 五. SDK拓展采集能力
 #### **5.0.1** 怎样获取`TextView`的显示文本?
 ##### 5.0.1.1 
@@ -113,4 +174,12 @@ public class WrapperOnCheckedChangeListener implements CompoundButton.OnCheckedC
 #### **5.1.0** 怎样采集 `Dialog` 的点击事件?
 
 ### 六. SDK缺陷
+
+#### 6.1 由于使用反射,效率比较低,对App的整体性能有一定影响,也可能会伴随着一些兼容问题
+
+#### 6.2 无法直接采集游离与Activity上的View的点击,比如Dialog,PopuWindow
+
+
+
+> 你的 点赞、评论、收藏、转发，是对我的巨大鼓励！
 
