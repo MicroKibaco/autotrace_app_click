@@ -3,7 +3,6 @@ package com.github.microkibaco.track_sdk;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ExpandableListView;
 import android.widget.GridView;
@@ -83,7 +82,7 @@ public class DelegateViewHolder {
      * @param view compoundButton代理ui
      */
     public void compoundButtonItemClick(View view) {
-        if (view instanceof CheckBox){
+        if (view instanceof CompoundButton){
             final CompoundButton.OnCheckedChangeListener onCheckedChangeListener =
                     SensorsDataHelper.getOnCheckedChangeListener(view);
             if (onCheckedChangeListener != null &&

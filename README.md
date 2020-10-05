@@ -1,3 +1,5 @@
+> 本文相关代码Github地址[autotrace_app_click](https://github.com/MicroKibaco/autotrace_app_click)，有帮助的话Star一波吧。
+
 ### 一. SDK业务背景
 &emsp;&emsp;你在开发中是否遇到过这样的场景,当点击同一个`dialog`或者`button`的时候,如果暴击多次,该`dialog`或`button`的被点击行为会被瞬间执行多次,这时候有小伙伴可能要想了,我可以做一个`view`时间戳呀,让它延迟生效。![错误的点击方式](//p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/57f651c251cf4ee39bef7c394bdb0e9f~tplv-k3u1fbpfcp-zoom-1.image)<br/>&emsp;&emsp;可是你们有木有想过一个问题,这么做?是不是会绑定`view`?如果工程里面有10000个点击事件需要处理,那岂不是要改10000行代码,有没有一种优雅的方式能实现如下需求呢?
  
@@ -244,6 +246,8 @@ public class WrapperOnCheckedChangeListener implements CompoundButton.OnCheckedC
 
 ##### 5.0.3.2 获取 CheckBox 设置的 OnCheckedChangeListener
 
+ 
+
 ```java
     /**
      * CheckBox  代理事件
@@ -266,6 +270,61 @@ public class WrapperOnCheckedChangeListener implements CompoundButton.OnCheckedC
 
 
 #### **5.0.4** 怎样采集`RadioGroup`的点击事件?
+- **5.0.4.1** 确定 `RadioGroup` 设置的`Listener`类型`OnGroupClickListener`,然后自定义`MkOnGroupClickListener`
+
+   
+```java
+public class MkOnGroupClickListener implements ExpandableListView.OnGroupClickListener {
+
+    private ExpandableListView.OnGroupClickListener source;
+
+    public MkOnGroupClickListener(ExpandableListView.OnGroupClickListener source) {
+        this.source = source;
+    }
+
+    @Override
+    public boolean onGroupClick(ExpandableListView expandableListView, View view, int groupPosition, long id) {
+        SensorsDataManager.trackAdapterView(expandableListView, view, groupPosition, -1);
+        if (source != null) {
+            source.onGroupClick(expandableListView, view, groupPosition, id);
+        }
+        return false;
+    }
+}
+```
+
+- **5.0.4.2** 判断当前`View`是`RadioGroup`
+
+```java
+ if (view instanceof RadioGroup) {
+            try {
+                RadioGroup radioGroup = (RadioGroup) view;
+                Activity activity = SensorsDataHelper.getActivityFromView(view);
+                if (activity != null) {
+                    int checkedRadioButtonId = radioGroup.getCheckedRadioButtonId();
+                    RadioButton radioButton = activity.findViewById(checkedRadioButtonId);
+                    if (radioButton != null) {
+                        text = radioButton.getText().toString();
+                    }
+                }
+            } catch (Exception e) {
+                Log.getStackTraceString(e);
+            }
+        }
+        
+```        
+
+- **5.0.4.3** 如果反射已经设置了`mOnClickListener`,且`mOnClickListener`不为空,比去不是我们自定义的`MkOnGroupClickListener`
+   - 通过`MkOnGroupClickListener`代理
+
+```java    
+     if (onGroupClickListener != null && !(onGroupClickListener instanceof MkOnGroupClickListener)) {
+
+                   ((ExpandableListView) view).setOnGroupClickListener(new MkOnGroupClickListener(onGroupClickListener));
+
+               }
+```                   
+               
 #### **5.0.5** 怎样采集`RattingBar`的点击事件?
 #### **5.0.6** 怎样采集 `SeekBar` 的点击事件?
 
