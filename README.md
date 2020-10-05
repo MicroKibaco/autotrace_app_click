@@ -195,15 +195,199 @@ public class WrapperOnCheckedChangeListener implements CompoundButton.OnCheckedC
 #### **5.0.7** 怎样采集 `Spinner` 的点击事件?
 #### **5.0.8** 怎样采集 `ListView` ,`GridView` 的点击事件?
 #### **5.0.9** 怎样采集 `ExpandableListView`的点击事件?
+&emsp;&emsp; `ExpandableListView`是`AdapterView`的子类,同时也是`ListView`的子类,`ListView`的点击事件分为`GroupClick`和`ChildClick`,它设置的监听器也有两种,这里我们就需要增加额外的方式去做处理啦,我们来看看 `ExpandableListView`的点击事件是如何处理的吧
+
+```java
+    public static void trackAdapterView(AdapterView<?> adapterView, View view, int groupPosition, int childPosition) {
+        try {
+            final JSONObject jsonObject = new JSONObject();
+            jsonObject.put(ITrackClickEvent.CANONICAL_NAME, adapterView.getClass().getCanonicalName());
+            jsonObject.put(ITrackClickEvent.ELEMENT_ID, SensorsDataHelper.getViewId(adapterView));
+            if (childPosition > -1) {
+                jsonObject.put(ITrackClickEvent.ELEMENT_POSITION, String.format(Locale.CHINA, "%d:%d", groupPosition, childPosition));
+            } else {
+                jsonObject.put(ITrackClickEvent.ELEMENT_POSITION, String.format(Locale.CHINA, "%d", groupPosition));
+            }
+            StringBuilder stringBuilder = new StringBuilder();
+            String viewText = SensorsDataHelper.traverseViewContent(stringBuilder, view);
+            if (!TextUtils.isEmpty(viewText)) {
+                jsonObject.put(ITrackClickEvent.ELEMENT_ELEMENT, viewText);
+            }
+            final Activity activity = SensorsDataHelper.getActivityFromView(adapterView);
+            if (activity != null) {
+                jsonObject.put(ITrackClickEvent.ACTIVITY_NAME, activity.getClass().getCanonicalName());
+            }
+
+            SensorsReporter.getSensorsDataApiInstance().track(ITrackClickEvent.APP_CLICK, jsonObject);
+        } catch (Exception e) {
+            Log.getStackTraceString(e);
+        }
+    }
+```
+   &emsp;&emsp; 那么我们是如何获取`ExpandableListView`的呢?这里主要体现在 `$element_position`这个参数上,我们需要根据是`group`或者`child`做不同的逻辑处理
+
+```java
+        /**
+     * ExpandableListView代理事件
+     *
+     * @param view ExpandableListView代理view
+     */
+    public void expandableItemClick(View view) {
+       if (view instanceof  ExpandableListView){
+           try {
+
+               final Class viewClazz = Class.forName("android.widget.ExpandableListView");
+
+               // ---------------------------------------Child---------------------------------------
+               Field mOnChildClickListenerField = viewClazz.getDeclaredField("mOnChildClickListener");
+
+               if (!mOnChildClickListenerField.isAccessible()) {
+
+                   mOnChildClickListenerField.setAccessible(true);
+
+               }
+               ExpandableListView.OnChildClickListener onChildClickListener =
+                       (ExpandableListView.OnChildClickListener) mOnChildClickListenerField.get(view);
+
+               if (onChildClickListener != null && !(onChildClickListener instanceof MkOnChildClickListener)) {
+
+                   ((ExpandableListView) view).setOnChildClickListener(new MkOnChildClickListener(onChildClickListener));
+
+               }
+
+               // ---------------------------------------Group---------------------------------------
+               Field mOnGroupClickListenerField = viewClazz.getDeclaredField("mOnGroupClickListener");
+
+               if (!mOnGroupClickListenerField.isAccessible()) {
+                   mOnGroupClickListenerField.setAccessible(true);
+               }
+
+               ExpandableListView.OnGroupClickListener onGroupClickListener =
+                       (ExpandableListView.OnGroupClickListener) mOnGroupClickListenerField.get(view);
+               if (onGroupClickListener != null && !(onGroupClickListener instanceof MkOnGroupClickListener)) {
+
+                   ((ExpandableListView) view).setOnGroupClickListener(new MkOnGroupClickListener(onGroupClickListener));
+
+               }
+
+           } catch (Exception e) {
+               Log.getStackTraceString(e);
+           }
+       }
+    }
+```
+&emsp;&emsp;先通过反射获取`mOnGroupClickListener`对象和`mOnChildClickListener`,如果`listener`不为空,并且不是我们需要的`Listener`类型,那么分别通过自定义的的`MkOnGroupClickListener`和`MkOnChildClickListener`区代理完成。
+
+##### 5.0.9.1 `OnGroupClickListene`源码如下:
+
+```java    
+/**
+ * @author 杨正友(小木箱)于 2020/10/4 15 22 创建
+ * @Email: yzy569015640@gmail.com
+ * @Tel: 18390833563
+ * @function description:
+ */
+public class MkOnGroupClickListener implements ExpandableListView.OnGroupClickListener {
+
+    private ExpandableListView.OnGroupClickListener source;
+
+    public MkOnGroupClickListener(ExpandableListView.OnGroupClickListener source) {
+        this.source = source;
+    }
+
+    @Override
+    public boolean onGroupClick(ExpandableListView expandableListView, View view, int groupPosition, long id) {
+        SensorsDataManager.trackAdapterView(expandableListView, view, groupPosition, -1);
+        if (source != null) {
+            source.onGroupClick(expandableListView, view, groupPosition, id);
+        }
+        return false;
+    }
+}
+```
+
+在其`onGroupClick`方法内部,我们首先调用埋点代码,然后调用原有的`listener`的`OnGroupClickListener`方法,这样即可实现`插入`埋点代码的效果
+
+##### 5.0.9.2 `OnChildClickClickListener`源码如下:
+
+```java
+
+/**
+ * @author 杨正友(小木箱)于 2020/10/4 15 21 创建
+ * @Email: yzy569015640@gmail.com
+ * @Tel: 18390833563
+ * @function description:
+ */
+public class MkOnChildClickListener implements ExpandableListView.OnChildClickListener {
+    private ExpandableListView.OnChildClickListener source;
+
+    public MkOnChildClickListener(ExpandableListView.OnChildClickListener source) {
+        this.source = source;
+    }
+
+    @Override
+    public boolean onChildClick(ExpandableListView expandableListView, View view, int groupPosition, int childPosition, long id) {
+
+        SensorsDataManager.trackAdapterView(expandableListView, view, groupPosition, childPosition);
+
+        if (source != null) {
+            return source.onChildClick(expandableListView, view, groupPosition, childPosition, id);
+        }
+
+        return false;
+    }
+}
+
+```
+
+
 #### **5.1.0** 怎样采集 `Dialog` 的点击事件?
 
+&emsp;&emsp; 目前这种全埋点的方案是无法采集`activity`上游离的`view`,如: `Dialog` ,因为无法遍历到被点击的`view`。,对于这样的dialog,我们可以通过如下方式解决
+
+```java
+    /**
+     * Track Dialog 的点击
+     * @param activity Activity
+     * @param dialog Dialog
+     */
+    public void trackDialog(@NonNull final Activity activity, @NonNull final Dialog dialog) {
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    SensorsDataManager.delegateViewsOnClickListener(activity, dialog.getWindow().getDecorView());
+                }
+            });
+        }
+
+    }
+```
+
+然后在`Dialog`show之前调用即可
+
+```java     
+        AlertDialog alertDialog = new AlertDialog.Builder(this)
+                .setNegativeButton("取消", (dialog, which) -> {})
+                .setPositiveButton("确定", (dialog, which) -> {})
+                .setTitle("小木箱").setMessage("一定要加油努力哦~").create();
+
+        SensorsReporter.getSensorsDataApiInstance().trackDialog(this,alertDialog);
+```        
+        
 ### 六. SDK缺陷
 
 #### 6.1 由于使用反射,效率比较低,对App的整体性能有一定影响,也可能会伴随着一些兼容问题
 
-#### 6.2 无法直接采集游离与Activity上的View的点击,比如Dialog,PopuWindow
+#### 6.2 无法直接采集游离与`activity`上的`view`的点击,比如`dialog`,`popuWindow`
 
 
+
+
+
+### 七. 参考资料
+
+- << [Android AutoTrace Solution](https://github.com/fengcunhan/AutoTrace) >>
 
 > 你的 点赞、评论、收藏、转发，是对我的巨大鼓励！
 
