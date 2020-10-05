@@ -342,6 +342,51 @@ public class MkOnGroupClickListener implements ExpandableListView.OnGroupClickLi
 
 #### **5.0.7** 怎样采集 `Spinner` 的点击事件?
 #### **5.0.8** 怎样采集 `ListView` ,`GridView` 的点击事件?
+&emsp;&emsp;`ListView` ,`GridView` 是`AdapterView`子类,设置代理逻辑判断都大同小异
+
+- 5.0.8.1 设置 `ListView/ GridView`的代理`MkAdapterViewOnItemClick`
+
+```java
+    /**
+     * 列表代理事件
+     *
+     * @param view gridView代理ui
+     */
+    public void gridViewItemClick(View view) {
+        if (view instanceof ListView || view instanceof GridView){
+            AdapterView.OnItemClickListener onItemClickListener = ((AdapterView) view).getOnItemClickListener();
+
+            if (onItemClickListener != null && !(onItemClickListener instanceof MkAdapterViewOnItemClick)) {
+
+                ((AdapterView) view).setOnItemClickListener(new MkAdapterViewOnItemClick(onItemClickListener));
+
+            }
+        }
+
+    }
+```
+    
+- 5.0.8.1 自定义 `MkAdapterViewOnItemClick`源码如下: 
+
+```java
+public class MkAdapterViewOnItemClick implements AdapterView.OnItemClickListener {
+    private AdapterView.OnItemClickListener source;
+
+    public MkAdapterViewOnItemClick(AdapterView.OnItemClickListener source) {
+        this.source = source;
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+        if (source != null) {
+            source.onItemClick(adapterView, view, position, id);
+        }
+
+        SensorsDataManager.trackAdapterView(adapterView, view, position);
+    }
+}
+```
+
 #### **5.0.9** 怎样采集 `ExpandableListView`的点击事件?
 &emsp;&emsp; `ExpandableListView`是`AdapterView`的子类,同时也是`ListView`的子类,`ListView`的点击事件分为`GroupClick`和`ChildClick`,它设置的监听器也有两种,这里我们就需要增加额外的方式去做处理啦,我们来看看 `ExpandableListView`的点击事件是如何处理的吧
 
