@@ -97,15 +97,104 @@ public interface ITrackClickEvent {
  new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        delegateViewsOnClickListener(activity, activity.getWindow().getDecorView());
+                        delegateViewsOnClickListener(activity, activity.findViewById(android.R.content));
                     }
                 },300);
 
 ``` 
 
 #### 4.2 `mOnClickListener`是无法采集`MenuItem`的点击事件
+
+&emsp;&emsp;我们通过`android.R.content`获取的`RootView`不包含`Activity`标题栏,其实也就是不包含`MenuItem`所对应的父容器的,自然当我们遍历`RootView`是无法获取`MenuItem`控件的,因此也无法代理`mOnClickListener`对象,间接导致`MenuItem`点击事件无法触发。我们可以借助`DecorView`来处理,那么什么是`DecorView`呢?
+
+![DecorView](https://tool.oschina.net/uploads/apidocs/android/resources/articles/images/window_background_root.png)
+
+
+官方解释是这样的: 
+
+> The DecorView is the view that actually holds the window’s background drawable. Calling getWindow().setBackgroundDrawable() from your Activity changes the background of the window by changing the DecorView‘s background drawable. As mentioned before, this setup is very specific to the current implementation of Android and can change in a future version or even on another device.
+
+&emsp;&emsp;我的理解是: `DecorView`是整个`Window`最顶层`View`,他有且只有一个字孩子`LinearLayout`,其实就包括了通知栏,标题栏,内容显示栏,`LinearLayout`里面包括两个`FrameLayout`,第一个是标题栏显示的Title,第二个`FrameLayout`才是我们所说的`android.R.content`。所以针对我么上面提到的无法采集`MenuItem`点击事件的问题,我们只需要将`activity.findViewById(android.R.content)` 换成 `activity.getWindow().getDecorView()`就可以采集到`MenuItem`的点击事件了
+
+```java
+       new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        delegateViewsOnClickListener(activity, activity.getWindow().getDecorView());
+                    }
+                },300);
+
+            }
+```
+
+&emsp;&emsp;但是上报的时候,我们发现却没有Button文本信息,这是为什么呢?`element_content`这个字段没问题呀,后面我查了一下,`MenuView.ItemView`的派生类是`ActionMenuItemView`,而非`View`,所以这里需要强转一下
+
+```java
+
+ else if (view instanceof ActionMenuItemView) {
+            text = ((ActionMenuItemView) view).getText().toString();
+        } 
+        
+```
+
 #### 4.3  无法采集`Button`点击,在`OnClickListener`里动态创建一个`Button`,然后通过`addView`添加到页面上,这个动态添加的`Button`无法采其点击事件
 
+```java
+ViewGroup rootView = findViewById(R.id.rootView);
+        AppCompatButton button = new AppCompatButton(this);
+        button.setText("动态创建的button");
+        button.setOnClickListener(v -> {
+            
+        });
+        rootView.addView(button);
+```
+当点击这个动态创建的 `rootView` ,当前方案是无法采集点击事件的。为啥会这样呢?这是因为我们在`Activity`的`onResume`之前去遍历整个`rootView` 并代理其`mOnClickListener`对象的,如果在`onResume`动态创建`View`当时肯定无法被遍历到的,后来我没没有再次遍历,所以它的`mOnClickListener`对就没有被代理过,因此点击控件是没有效果的,那么该怎么办呢?用`OnGlobalLayoutListener`来解决,什么是`OnGlobalLayoutListener`?官方解释是这样的:
+
+> Interface definition for a callback to be invoked when the global layout state or the visibility of views within the view tree changes.
+
+我的理解是:  当一个`View`视图树发生改变的时候,我没给当前的`View`设置了`OnGlobalLayoutListener`监听器,就能回调	`onGlobalLayout()`方法,基于这个原理我们可以给我们的`Activity`的`RootView`注册一个这样的监听器,这样就能实时观察视图树布局的变化呢,我们重新遍历一次`RootView`,然后找到那些没有被代理过的`OnGlobalLayoutListener`对象`View`进行代理即可解决上面的问题
+
+
+```java
+            private ViewTreeObserver.OnGlobalLayoutListener onGlobalLayoutListener;
+
+            @Override
+            public void onActivityCreated(@NonNull final Activity activity, @Nullable Bundle savedInstanceState) {
+                onGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        delegateViewsOnClickListener(activity,
+                                SensorsDataHelper.getRootViewFromActivity(activity, false));
+                    }
+                };
+            }
+
+       
+
+            @Override
+            public void onActivityResumed(@NonNull final Activity activity) {
+
+                SensorsDataHelper
+                         .getRootViewFromActivity(activity, true)
+                         .getViewTreeObserver()
+                         .addOnGlobalLayoutListener(onGlobalLayoutListener);
+            }
+            
+            @Override
+            public void onActivityStopped(@NonNull Activity activity) {
+
+                /*
+                 * 移除顶层Activity的监听
+                 */
+                SensorsDataHelper.getRootViewFromActivity(activity, false)
+                        .getViewTreeObserver()
+                        .removeOnGlobalLayoutListener(onGlobalLayoutListener);
+
+            }
+            // -----------------省-------------------------
+             }
+        
+```
 
 ### 五. SDK拓展采集能力
 #### **5.0.1** 怎样获取`TextView`的显示文本?
@@ -343,7 +432,7 @@ public class MkOnChildClickListener implements ExpandableListView.OnChildClickLi
 
 #### **5.1.0** 怎样采集 `Dialog` 的点击事件?
 
-&emsp;&emsp; 目前这种全埋点的方案是无法采集`activity`上游离的`view`,如: `Dialog` ,因为无法遍历到被点击的`view`。,对于这样的dialog,我们可以通过如下方式解决
+&emsp;&emsp; 目前这种全埋点的方案是无法采集`activity`上游离的`view`,如: `Dialog` ,因为无法遍历到被点击的`view`。对于这样的`dialog`,我们可以通过如下方式解决
 
 ```java
     /**

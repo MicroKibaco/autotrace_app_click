@@ -29,13 +29,20 @@ public interface ITrackClickEvent {
      * 点击空间行为事件名称
      */
     String APP_CLICK = "$AppClick";
-
+    /**
+     * app版本
+     */
     String APP_VERSION = "$app_version";
 
     String APP_NAME = "$app_name";
-
+    /**
+     * 屏幕高度
+     */
     String SCREEN_HEIGHT = "$screen_height";
 
+    /**
+     * 屏幕宽度
+     */
     String SCREEN_WIDTH = "$screen_width";
 
     String ELEMENT_POSITION = "$element_position";
@@ -48,15 +55,28 @@ public interface ITrackClickEvent {
 
     String LIB_VERSION = "$lib_version";
 
+    /**
+     * 手机类型
+     */
     String OS = "$os";
 
+    /**
+     * 手机系统版本信息
+     */
     String OS_VERSION = "$os_version";
 
     String MANUFACTURER = "$manufacturer";
     String LIB = "$lib";
+    /**
+     * 上报时间
+     */
     String TIME = "time";
 
     String PROPERTIES = "properties";
+    /**
+     * 设备id
+     */
     String DEVICE_ID = "device_id";
     String EVENT = "event";
+
 }

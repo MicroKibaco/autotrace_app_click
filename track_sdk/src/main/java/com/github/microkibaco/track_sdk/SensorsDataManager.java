@@ -7,7 +7,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -105,27 +104,15 @@ public class SensorsDataManager {
                 };
             }
 
-            @Override
-            public void onActivityStarted(@NonNull Activity activity) {
 
-            }
 
             @Override
             public void onActivityResumed(@NonNull final Activity activity) {
 
-                // TODO:为了防止DataBonding框架给Button设置OnClickListener对象动作稍微晚于onActivityResumed生命周期
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        delegateViewsOnClickListener(activity, activity.getWindow().getDecorView());
-                    }
-                },300);
-
-            }
-
-            @Override
-            public void onActivityPaused(@NonNull Activity activity) {
-
+                SensorsDataHelper
+                         .getRootViewFromActivity(activity, true)
+                         .getViewTreeObserver()
+                         .addOnGlobalLayoutListener(onGlobalLayoutListener);
             }
 
             @Override
@@ -137,6 +124,16 @@ public class SensorsDataManager {
                 SensorsDataHelper.getRootViewFromActivity(activity, false)
                         .getViewTreeObserver()
                         .removeOnGlobalLayoutListener(onGlobalLayoutListener);
+
+            }
+
+            @Override
+            public void onActivityPaused(@NonNull Activity activity) {
+
+            }
+
+            @Override
+            public void onActivityStarted(@NonNull Activity activity) {
 
             }
 
