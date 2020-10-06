@@ -1,5 +1,8 @@
 > 本文相关代码Github地址[autotrace_app_click](https://github.com/MicroKibaco/autotrace_app_click)，有帮助的话Star一波吧。
 
+
+[TOC]
+
 ### 一. SDK业务背景
 &emsp;&emsp;你在开发中是否遇到过这样的场景,当点击同一个`dialog`或者`button`的时候,如果暴击多次,该`dialog`或`button`的被点击行为会被瞬间执行多次,这时候有小伙伴可能要想了,我可以做一个`view`时间戳呀,让它延迟生效。![错误的点击方式](//p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/57f651c251cf4ee39bef7c394bdb0e9f~tplv-k3u1fbpfcp-zoom-1.image)<br/>&emsp;&emsp;可是你们有木有想过一个问题,这么做?是不是会绑定`view`?如果工程里面有10000个点击事件需要处理,那岂不是要改10000行代码,有没有一种优雅的方式能实现如下需求呢?
  
